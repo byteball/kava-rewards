@@ -25,7 +25,7 @@ async function getUrlWithRetries(url) {
 		}
 		catch (e) {
 			console.log(`attempt ${r} getting ${url} failed`, e);
-			if (r > 5)
+			if (r > 5 || e.response && e.response.status === 404)
 				throw e;
 			await wait(30_000);
 			r++;
