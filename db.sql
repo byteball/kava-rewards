@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS average_balances (
 	effective_balance DOUBLE NOT NULL,
 	effective_usd_balance DOUBLE NOT NULL,
 	creation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (snapshot_id) REFERENCES snapshots(snapshot_id),
 	PRIMARY KEY (period, address, home_asset)
 );
 
