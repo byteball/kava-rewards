@@ -34,6 +34,19 @@ CREATE TABLE IF NOT EXISTS balances (
 	UNIQUE (snapshot_id, address, home_asset)
 );
 
+CREATE TABLE IF NOT EXISTS average_balances (
+	period CHAR(7) NOT NULL, -- 2023-05
+	address CHAR(32) NOT NULL,
+	home_asset CHAR(42) NOT NULL,
+	home_symbol VARCHAR(20) NOT NULL,
+	balance DOUBLE NOT NULL,
+	effective_balance DOUBLE NOT NULL,
+	effective_usd_balance DOUBLE NOT NULL,
+	creation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (snapshot_id) REFERENCES snapshots(snapshot_id),
+	PRIMARY KEY (period, address, home_asset)
+);
+
 -- query separator
 CREATE TABLE IF NOT EXISTS address_types (
 	address CHAR(32) NOT NULL UNIQUE,

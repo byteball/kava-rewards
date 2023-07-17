@@ -38,6 +38,23 @@ router.get('/snapshots/:snapshot_id', async (ctx) => {
 	};
 });
 
+router.get('/average_balances/:period', async (ctx) => {
+	let period = ctx.params.period ? decodeURIComponent(ctx.params.period) : ctx.query.period;
+	if (period === 'latest') {
+		const [row] = await db.query("SELECT period FROM average_balances ORDER BY rowid DESC LIMIT 1");
+		if (!row)
+			return setError(ctx, "no average_balances yet");
+		period = row.period;
+	}
+	const average_balances = await db.query("SELECT * FROM average_balances WHERE period=?", [period]);
+	if (!average_balances)
+		return setError(ctx, 'no average_balances in period ' + period);
+	ctx.body = {
+		status: 'success',
+		data: average_balances
+	};
+});
+
 router.get('/rewards/:period', async (ctx) => {
 	const period = ctx.params.period ? decodeURIComponent(ctx.params.period) : ctx.query.period;
 	const [rewards] = (period === 'latest')

@@ -97,6 +97,10 @@ async function getNextSnapshotId() {
 	return row ? row.snapshot_id + 1 : 1;
 }
 
+function getCurrentPeriod() {
+	return new Date().toISOString().substring(0, 7);
+}
+
 async function recordSnapshot() {
 	const unlock = await mutex.lock('recordSnapshot');
 	console.log(`starting recordSnapshot`);
@@ -132,6 +136,20 @@ async function recordSnapshot() {
 		await conn.query("INSERT INTO snapshots (snapshot_id, total_effective_usd_balance) VALUES (?,?)", [snapshot_id, total_effective_usd_balance]);
 		await conn.query(`INSERT INTO exchange_rates (snapshot_id, home_asset, home_symbol, exchange_rate) VALUES ` + exchange_rates_rows.join(', '));
 		await conn.query(`INSERT INTO balances (snapshot_id, address, home_asset, home_symbol, balance, effective_balance, effective_usd_balance) VALUES ` + balances_rows.join(', '));
+
+		const period = getCurrentPeriod();
+		const first_day = period + '-01';
+		const [{ count_snapshots }] = await conn.query(`SELECT COUNT(*) AS count_snapshots FROM snapshots WHERE creation_date>=?`, [first_day]);
+		const [{ first_snapshot_id }] = await conn.query(`SELECT snapshot_id AS first_snapshot_id FROM snapshots WHERE creation_date>=? ORDER BY creation_date LIMIT 1`, [first_day]);
+		await conn.query(`REPLACE INTO average_balances 
+			(period, address, home_asset, home_symbol, balance, effective_balance, effective_usd_balance)
+			SELECT ?, address, home_asset, home_symbol, SUM(balance)/?, SUM(effective_balance)/?, SUM(effective_usd_balance)/?
+			FROM balances
+			WHERE snapshot_id>=?
+			GROUP BY address, home_asset`,
+			[period, count_snapshots, count_snapshots, count_snapshots, first_snapshot_id]
+		);
+
 		await conn.query("COMMIT");
 		setTimeout(recordSnapshot, getRandomTimeout(0, 60));
 		console.log(`done recordSnapshot`);
