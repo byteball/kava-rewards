@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS snapshots (
 	snapshot_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-	total_effecive_usd_balance DOUBLE NULL,
+	total_effective_usd_balance DOUBLE NULL,
 	creation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 -- query separator

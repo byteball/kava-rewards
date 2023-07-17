@@ -21,7 +21,7 @@ async function insertRewards(period, total_reward) {
 	console.log({ from_day, to_day });
 	let rewards_rows = [];
 	const [{ cumulative_total_balance }] = await db.query(
-		`SELECT SUM(total_effecive_usd_balance) AS cumulative_total_balance 
+		`SELECT SUM(total_effective_usd_balance) AS cumulative_total_balance 
 		FROM snapshots
 		WHERE snapshots.creation_date>=? AND snapshots.creation_date<?`, [from_day, to_day]);
 	const rows = await db.query(

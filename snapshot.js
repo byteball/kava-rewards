@@ -1,5 +1,6 @@
 const axios = require("axios");
 const conf = require('ocore/conf.js');
+const mutex = require('ocore/mutex.js');
 const db = require('ocore/db.js');
 const dag = require('aabot/dag.js');
 
@@ -80,19 +81,20 @@ async function getAddressType(address, conn = db) {
 	return type;
 }
 
+async function getNextSnapshotId() {
+	const [row] = await db.query("SELECT snapshot_id FROM snapshots ORDER BY snapshot_id DESC LIMIT 1");
+	return row ? row.snapshot_id + 1 : 1;
+}
+
 async function recordSnapshot() {
+	const unlock = await mutex.lock('recordSnapshot');
 	console.log(`starting recordSnapshot`);
 	let total_effective_usd_balance = 0;
 	let exchange_rates_rows = [];
 	let balances_rows = [];
 	try {
 		const assets = await getEligibleAssets();
-		var conn = await db.takeConnectionFromPool();
-		await conn.query("BEGIN");
-		const res = await conn.query("INSERT INTO snapshots (snapshot_id) VALUES (NULL)");
-		const snapshot_id = res.insertId;
-		if (!snapshot_id)
-			throw Error(`no snapshot id`);
+		const snapshot_id = await getNextSnapshotId();
 		for (const asset in assets) {
 			const { home_asset, home_asset_decimals, foreign_asset_decimals, home_symbol, foreign_symbol } = assets[asset];
 			const multiplier = conf.multipliers[home_asset] || 1;
@@ -114,9 +116,11 @@ async function recordSnapshot() {
 		}
 		console.error(exchange_rates_rows)
 		console.error(balances_rows)
+		var conn = await db.takeConnectionFromPool();
+		await conn.query("BEGIN");
+		await conn.query("INSERT INTO snapshots (snapshot_id, total_effective_usd_balance) VALUES (?,?)", [snapshot_id, total_effective_usd_balance]);
 		await conn.query(`INSERT INTO exchange_rates (snapshot_id, home_asset, home_symbol, exchange_rate) VALUES ` + exchange_rates_rows.join(', '));
 		await conn.query(`INSERT INTO balances (snapshot_id, address, home_asset, home_symbol, balance, effective_balance, effective_usd_balance) VALUES ` + balances_rows.join(', '));
-		await conn.query("UPDATE snapshots SET total_effecive_usd_balance=? WHERE snapshot_id=?", [total_effective_usd_balance, snapshot_id]);
 		await conn.query("COMMIT");
 		setTimeout(recordSnapshot, getRandomTimeout(0, 60));
 		console.log(`done recordSnapshot`);
@@ -130,6 +134,7 @@ async function recordSnapshot() {
 	finally {
 		if (conn)
 			conn.release();
+		unlock();
 	}
 }
 
