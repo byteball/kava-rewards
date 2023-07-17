@@ -53,11 +53,22 @@ async function fetchERC20ExchangeRate(token_address) {
 	const url = token_address === '0x0000000000000000000000000000000000000000'
 		? `https://api.coingecko.com/api/v3/coins/kava`
 		: `https://api.coingecko.com/api/v3/coins/${chain}/contract/${token_address.toLowerCase()}`;
-	const { data } = await getUrlWithRetries(url);
-	const prices = data.market_data.current_price;
-	if (!prices.usd)
-		console.log(`no price for token ${token_address}`);
-	return prices.usd || 0;
+	try {
+		const { data } = await getUrlWithRetries(url);
+		const prices = data.market_data.current_price;
+		if (!prices.usd)
+			console.log(`no price for token ${token_address}`);
+		return prices.usd || 0;
+	}
+	catch (e) {
+		console.log('fetchERC20ExchangeRate error response', e.response);
+		if (e.response && e.response.status === 404) {
+			console.log(`token ${token_address} not known, assuming 0 price`);
+			return 0;
+		}
+		else
+			throw e;
+	}
 }
 
 async function getHolders(asset, offset = 0) {
