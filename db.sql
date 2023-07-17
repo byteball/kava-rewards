@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS balances (
 	UNIQUE (snapshot_id, address, home_asset)
 );
 
+-- query separator
 CREATE TABLE IF NOT EXISTS average_balances (
 	period CHAR(7) NOT NULL, -- 2023-05
 	address CHAR(32) NOT NULL,
