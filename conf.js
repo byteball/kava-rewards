@@ -17,7 +17,7 @@ exports.explorer_url = process.env.testnet ? 'https://testnetexplorer.obyte.org/
 
 // home asset => multiplier, for assets that generate double or triple TVL
 exports.multipliers = {
-
+	'0x31f8d38df6514b6cc3C360ACE3a2EFA7496214f6': 2, // LINE token
 };
 
 exports.webPort = 5282;
