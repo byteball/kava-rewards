@@ -50,6 +50,8 @@ async function getEligibleAssets() {
 
 
 async function fetchERC20ExchangeRate(token_address) {
+	if (token_address === '0xfA9343C3897324496A05fC75abeD6bAC29f8A40f') // Multichain USDC (depegged)
+		return await getMultichainUsdcPrice();
 	const url = token_address === '0x0000000000000000000000000000000000000000'
 		? `https://api.coingecko.com/api/v3/coins/kava`
 		: `https://api.coingecko.com/api/v3/coins/${chain}/contract/${token_address.toLowerCase()}`;
@@ -69,6 +71,15 @@ async function fetchERC20ExchangeRate(token_address) {
 		else
 			throw e;
 	}
+}
+
+async function getMultichainUsdcPrice() {
+	const { data } = await getUrlWithRetries(`https://api.coingecko.com/api/v3/coins/usd-coin/tickers?exchange_ids=equilibre&order=volume_desc`);
+	for (let { coin_id, target_coin_id, last } of data.tickers) {
+		if (coin_id === 'axlusdc' && target_coin_id === 'usd-coin')
+			return 1 / last;
+	}
+	throw Error(`axlUSDC-multiUSDC pair not found`);
 }
 
 async function getHolders(asset, offset = 0) {
