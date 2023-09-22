@@ -143,6 +143,10 @@ async function recordSnapshot() {
 					console.log(`skipping address ${address} as it is an AA`);
 					continue;
 				}
+				if (foreign_symbol === 'LINE' && address === 'KUNNTFAD3G55IWXSNKTDRKH222E4DF7R') {
+					console.log(`skipping CS assistant on LINE`);
+					continue;
+				}
 				balance /= 10 ** foreign_asset_decimals;
 				const effective_balance = balance * multiplier;
 				const effective_usd_balance = effective_balance * price;
