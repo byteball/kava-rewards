@@ -2,6 +2,7 @@ const axios = require("axios");
 const conf = require('ocore/conf.js');
 const mutex = require('ocore/mutex.js');
 const db = require('ocore/db.js');
+const network = require('ocore/network.js');
 const dag = require('aabot/dag.js');
 
 const chain = 'kava';
@@ -43,13 +44,15 @@ async function getEligibleAssets() {
 	const bridges = await getBridges();
 	for (const { home_network, foreign_network, home_asset, foreign_asset, home_asset_decimals, foreign_asset_decimals, home_symbol, foreign_symbol } of bridges) {
 		if (home_network === 'Kava' && foreign_network === 'Obyte')
-			assets[foreign_asset] = { home_asset, home_asset_decimals, foreign_asset_decimals, home_symbol, foreign_symbol };
+			assets[foreign_asset] = { home_asset, foreign_asset, home_asset_decimals, foreign_asset_decimals, home_symbol, foreign_symbol };
 	}
 	return assets;
 }
 
 
-async function fetchERC20ExchangeRate(token_address) {
+async function fetchExchangeRate(token_address, foreign_asset, foreign_symbol) {
+	if (foreign_symbol === 'LINE')
+		return getObyteAssetPrice(foreign_asset);
 	if (token_address === '0xfA9343C3897324496A05fC75abeD6bAC29f8A40f') // Multichain USDC (depegged)
 		return await getMultichainUsdcPrice();
 	const url = token_address === '0x0000000000000000000000000000000000000000'
@@ -71,6 +74,13 @@ async function fetchERC20ExchangeRate(token_address) {
 		else
 			throw e;
 	}
+}
+
+function getObyteAssetPrice(asset) {
+	const price = network.exchangeRates[asset + '_USD'];
+	if (!price)
+		throw Error(`no price of ${asset}`);
+	return price;
 }
 
 async function getMultichainUsdcPrice() {
@@ -121,10 +131,10 @@ async function recordSnapshot() {
 	try {
 		const assets = await getEligibleAssets();
 		const snapshot_id = await getNextSnapshotId();
-		for (const asset in assets) {
+		for (const asset in assets) { // asset is foreign_asset
 			const { home_asset, home_asset_decimals, foreign_asset_decimals, home_symbol, foreign_symbol } = assets[asset];
 			const multiplier = conf.multipliers[home_asset] || 1;
-			const price = await fetchERC20ExchangeRate(home_asset);
+			const price = await fetchExchangeRate(home_asset, asset, foreign_symbol);
 			exchange_rates_rows.push(`(${snapshot_id}, ${db.escape(home_asset)}, ${db.escape(home_symbol)}, ${+price})`);
 			const holders = await getHolders(asset);
 			for (let { address, balance } of holders) {
