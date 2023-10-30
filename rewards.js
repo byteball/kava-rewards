@@ -7,8 +7,8 @@ const operator = require('aabot/operator.js');
 
 async function insertRewards(period, total_reward) {
 	const [year, month] = period.split('-');
-	let end_year = year;
-	let end_month = month + 1;
+	let end_year = +year;
+	let end_month = +month + 1;
 	if (end_month > 12) {
 		end_month = 1;
 		end_year++;
