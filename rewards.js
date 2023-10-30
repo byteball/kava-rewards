@@ -83,7 +83,7 @@ async function start() {
 		if (!headlessWallet.isControlAddress(from_address))
 			return sendResponse("This bot can be managed only from control addresses.  If you are the owner, add your device address to the list of control addresses in conf.js or conf.json.");
 		
-		let arrMatches = text.match(/^reward (\d\d\d\d-\d\d) \d+/i);
+		let arrMatches = text.match(/^reward (\d\d\d\d-\d\d) ([\d.]+)/i);
 		if (arrMatches) {
 			const period = arrMatches[1];
 			const gb_amount = arrMatches[2];
