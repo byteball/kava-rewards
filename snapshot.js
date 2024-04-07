@@ -84,12 +84,19 @@ function getObyteAssetPrice(asset) {
 }
 
 async function getMultichainUsdcPrice() {
+	/*	
 	const { data } = await getUrlWithRetries(`https://api.coingecko.com/api/v3/coins/usd-coin/tickers?exchange_ids=equilibre&order=volume_desc`);
 	for (let { coin_id, target_coin_id, last } of data.tickers) {
 		if (coin_id === 'axlusdc' && target_coin_id === 'usd-coin')
 			return 1 / last;
 	}
 	throw Error(`axlUSDC-multiUSDC pair not found`);
+	*/
+	const multiUSDCTokenAddress = '0xfa9343c3897324496a05fc75abed6bac29f8a40f';
+	const { data } = await getUrlWithRetries(`https://api.geckoterminal.com/api/v2/simple/networks/kava/token_price/${multiUSDCTokenAddress}`);
+	const price = +data.data.attributes.token_prices[multiUSDCTokenAddress];
+	console.log('multiUSDC price', price);
+	return price;
 }
 
 async function getHolders(asset, offset = 0) {
