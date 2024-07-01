@@ -52,9 +52,9 @@ async function getEligibleAssets() {
 
 async function fetchExchangeRate(token_address, foreign_asset, foreign_symbol) {
 	if (foreign_symbol === 'LINE')
-		return getObyteAssetPrice(foreign_asset);
-	if (token_address === '0xfA9343C3897324496A05fC75abeD6bAC29f8A40f') // Multichain USDC (depegged)
-		return await getMultichainUsdcPrice();
+		return await getPriceViaGeckoTerminal(conf.line_token_address);
+	if (token_address === conf.multichain_usdc_token_address) // Multichain USDC (depegged)
+		return await getPriceViaGeckoTerminal(token_address);
 	const url = token_address === '0x0000000000000000000000000000000000000000'
 		? `https://api.coingecko.com/api/v3/coins/kava`
 		: `https://api.coingecko.com/api/v3/coins/${chain}/contract/${token_address.toLowerCase()}`;
@@ -83,7 +83,7 @@ function getObyteAssetPrice(asset) {
 	return price;
 }
 
-async function getMultichainUsdcPrice() {
+async function getPriceViaGeckoTerminal(token_address) {
 	/*	
 	const { data } = await getUrlWithRetries(`https://api.coingecko.com/api/v3/coins/usd-coin/tickers?exchange_ids=equilibre&order=volume_desc`);
 	for (let { coin_id, target_coin_id, last } of data.tickers) {
@@ -92,10 +92,15 @@ async function getMultichainUsdcPrice() {
 	}
 	throw Error(`axlUSDC-multiUSDC pair not found`);
 	*/
-	const multiUSDCTokenAddress = '0xfa9343c3897324496a05fc75abed6bac29f8a40f';
-	const { data } = await getUrlWithRetries(`https://api.geckoterminal.com/api/v2/simple/networks/kava/token_price/${multiUSDCTokenAddress}`);
-	const price = +data.data.attributes.token_prices[multiUSDCTokenAddress];
-	console.log('multiUSDC price', price);
+	const { data } = await getUrlWithRetries(`${conf.gecko_terminal_api_url}/simple/networks/kava/token_price/${token_address}`);
+	const price = +data.data.attributes.token_prices[token_address];
+
+	if (token_address === conf.multichain_usdc_token_address) {
+		console.log('multiUSDC price', price);
+	} else if (token_address === conf.line_token_address) {
+		console.log('LINE price', price);
+	}
+	
 	return price;
 }
 
