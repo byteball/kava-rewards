@@ -93,7 +93,7 @@ async function getPriceViaGeckoTerminal(token_address) {
 	throw Error(`axlUSDC-multiUSDC pair not found`);
 	*/
 	const { data } = await getUrlWithRetries(`${conf.gecko_terminal_api_url}/simple/networks/kava/token_price/${token_address}`);
-	const price = +data.data.attributes.token_prices[token_address];
+	const price = +data.data.attributes.token_prices[token_address.toLowerCase()];
 
 	if (token_address === conf.multichain_usdc_token_address) {
 		console.log('multiUSDC price', price);
