@@ -142,7 +142,7 @@ async function recordSnapshot() {
 	let balances_rows = [];
 	try {
 		const assets = await getEligibleAssets();
-		if (assets.length === 0)
+		if (Object.keys(assets).length === 0)
 			return unlock('no assets, skipping snapshot');
 		const snapshot_id = await getNextSnapshotId();
 		for (const asset in assets) { // asset is foreign_asset
