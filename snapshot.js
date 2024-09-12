@@ -143,7 +143,7 @@ async function recordSnapshot() {
 	try {
 		const assets = await getEligibleAssets();
 		if (Object.keys(assets).length === 0)
-			return unlock('no assets, skipping snapshot');
+			return console.log('no assets, skipping snapshot');
 		const snapshot_id = await getNextSnapshotId();
 		for (const asset in assets) { // asset is foreign_asset
 			const { home_asset, home_asset_decimals, foreign_asset_decimals, home_symbol, foreign_symbol } = assets[asset];
